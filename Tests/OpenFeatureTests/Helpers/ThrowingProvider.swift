@@ -12,7 +12,7 @@ class ThrowingProvider: FeatureProvider {
         throw OpenFeatureError.providerFatalError(message: "Wrong credentials")
     }
 
-    func initialize(initialContext: OpenFeature.EvaluationContext?) throws {
+    func initialize(initialContext: OpenFeature.EvaluationContext?) async throws {
         throw OpenFeatureError.providerFatalError(message: "Wrong credentials")
     }
 

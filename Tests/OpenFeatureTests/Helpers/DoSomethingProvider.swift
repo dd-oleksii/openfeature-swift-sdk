@@ -9,7 +9,7 @@ class DoSomethingProvider: FeatureProvider {
     func onContextSet(oldContext: OpenFeature.EvaluationContext?, newContext: OpenFeature.EvaluationContext) {
     }
 
-    func initialize(initialContext: OpenFeature.EvaluationContext?) {
+    func initialize(initialContext: OpenFeature.EvaluationContext?) async throws {
     }
 
     var hooks: [any OpenFeature.Hook] = []

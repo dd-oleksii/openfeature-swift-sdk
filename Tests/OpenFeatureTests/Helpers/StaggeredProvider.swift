@@ -17,7 +17,7 @@ class StaggeredProvider: FeatureProvider {
         activeContext = newContext
     }
 
-    func initialize(initialContext: OpenFeature.EvaluationContext?) {
+    func initialize(initialContext: OpenFeature.EvaluationContext?) async throws {
         if let initialContext {
             activeContext = initialContext
         }

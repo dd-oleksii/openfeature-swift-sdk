@@ -122,6 +122,14 @@ public protocol FeatureProvider: EventPublisher {
 }
 
 extension FeatureProvider {
+    public func initialize(initialContext: EvaluationContext?) async throws {
+        // Default to no-op
+    }
+
+    public func onContextSet(oldContext: EvaluationContext?, newContext: EvaluationContext) async throws {
+        // Default to no-op
+    }
+
     public func track(key: String, context: (any EvaluationContext)?, details: (any TrackingEventDetails)?) throws {
         // Default to no-op
     }

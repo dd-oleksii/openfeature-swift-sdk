@@ -13,7 +13,7 @@ class AlwaysBrokenProvider: FeatureProvider {
         eventHandler.send(.error())
     }
 
-    func initialize(initialContext: OpenFeature.EvaluationContext?) {
+    func initialize(initialContext: OpenFeature.EvaluationContext?) async throws {
         eventHandler.send(.error())
     }
 

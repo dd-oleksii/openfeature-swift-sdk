@@ -24,7 +24,7 @@ final class DeveloperExperienceTests: XCTestCase {
         XCTAssertFalse(flagValue)
     }
 
-    func testObserveGlobalEvents() async {
+    func testObserveGlobalEvents() async throws {
         let readyExpectation = XCTestExpectation(description: "Ready")
         var eventState = OpenFeatureAPI.shared.observe().sink { event in
             switch event {
@@ -49,7 +49,7 @@ final class DeveloperExperienceTests: XCTestCase {
 
         // Initialize the provider directly - this shouldn't emit events through the API
         // since the provider is no longer set in the API
-        provider.initialize(initialContext: MutableContext(attributes: ["Test": Value.string("Test")]))
+        try await provider.initialize(initialContext: MutableContext(attributes: ["Test": Value.string("Test")]))
         XCTAssertNotNil(eventState)
     }
 
