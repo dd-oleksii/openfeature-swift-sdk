@@ -27,26 +27,35 @@ public class MultiProvider: FeatureProvider {
         metadata = MultiProviderMetadata(providers: providers)
     }
 
-    public func initialize(initialContext: EvaluationContext?) async throws {
-        try await withThrowingTaskGroup(of: Void.self) { group in
-            for provider in providers {
-                group.addTask {
-                    try await provider.initialize(initialContext: initialContext)
-                }
-            }
-            try await group.waitForAll()
-        }
+    public func initialize(
+        initialContext: EvaluationContext?, onDone: @escaping @Sendable (Result<Void, Error>) -> Void
+    ) {
+        dispatchAll(
+            providers: providers,
+            each: { provider, callback in provider.initialize(initialContext: initialContext, onDone: callback) },
+            onDone: onDone
+        )
     }
 
-    public func onContextSet(oldContext: EvaluationContext?, newContext: EvaluationContext) async throws {
-        try await withThrowingTaskGroup(of: Void.self) { group in
-            for provider in providers {
-                group.addTask {
-                    try await provider.onContextSet(oldContext: oldContext, newContext: newContext)
-                }
-            }
-            try await group.waitForAll()
-        }
+    public func shutdown(onDone: @escaping @Sendable () -> Void) {
+        dispatchAll(
+            providers: providers,
+            each: { provider, callback in provider.shutdown(onDone: { callback(.success(())) }) },
+            onDone: { _ in onDone() }
+        )
+    }
+
+    public func onContextSet(
+        oldContext: EvaluationContext?, newContext: EvaluationContext,
+        onDone: @escaping @Sendable (Result<Void, Error>) -> Void
+    ) {
+        dispatchAll(
+            providers: providers,
+            each: { provider, callback in
+                provider.onContextSet(oldContext: oldContext, newContext: newContext, onDone: callback)
+            },
+            onDone: onDone
+        )
     }
 
     public func getBooleanEvaluation(key: String, defaultValue: Bool, context: EvaluationContext?) throws
@@ -162,7 +171,7 @@ public class MultiProvider: FeatureProvider {
         }
     }
 
-    public func observe() -> AnyPublisher<ProviderEvent?, Never> {
+    public func observe() -> AnyPublisher<ProviderEvent, Never> {
         return Publishers.MergeMany(providers.map { $0.observe() }).eraseToAnyPublisher()
     }
 
@@ -176,6 +185,39 @@ public class MultiProvider: FeatureProvider {
                     $0.metadata.name ?? "Provider"
                 }
                 .joined(separator: ", ")
+        }
+    }
+}
+
+/// Runs `body(provider, callback)` for each provider; when all callbacks have been invoked,
+/// invokes `onDone` with the first error if any, otherwise success.
+/// For void-only operations (e.g. shutdown), have the body call `callback(.success(()))` when done.
+private func dispatchAll(
+    providers: [FeatureProvider],
+    each body: (FeatureProvider, @escaping @Sendable (Result<Void, Error>) -> Void) -> Void,
+    onDone: @escaping @Sendable (Result<Void, Error>) -> Void
+) {
+    /// Thread-safe shared state for aggregating results from concurrent callbacks.
+    final class SharedState: @unchecked Sendable {
+        let lock = NSLock()
+        var value: Error?
+    }
+    let state = SharedState()
+    let group = DispatchGroup()
+    for provider in providers {
+        group.enter()
+        body(provider) { result in
+            defer { group.leave() }
+            if case .failure(let error) = result {
+                state.lock.withLock { if state.value == nil { state.value = error } }
+            }
+        }
+    }
+    group.notify(queue: .global()) {
+        if let error = state.lock.withLock({ state.value }) {
+            onDone(.failure(error))
+        } else {
+            onDone(.success(()))
         }
     }
 }

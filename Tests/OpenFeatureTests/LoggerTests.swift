@@ -330,9 +330,6 @@ class LoggerCapturingProvider: FeatureProvider {
     var capturedLogger: Logger?
     private let eventHandler = EventHandler()
 
-    func initialize(initialContext: EvaluationContext?) async throws {}
-    func onContextSet(oldContext: EvaluationContext?, newContext: EvaluationContext) async throws {}
-
     func getBooleanEvaluation(key: String, defaultValue: Bool, context: EvaluationContext?) throws
         -> ProviderEvaluation<Bool>
     { ProviderEvaluation(value: defaultValue) }
@@ -389,6 +386,6 @@ class LoggerCapturingProvider: FeatureProvider {
         return try getObjectEvaluation(key: key, defaultValue: defaultValue, context: context)
     }
 
-    func observe() -> AnyPublisher<ProviderEvent?, Never> { eventHandler.observe() }
+    func observe() -> AnyPublisher<ProviderEvent, Never> { eventHandler.observe() }
     struct TestMetadata: ProviderMetadata { var name: String? = "LoggerCapturingProvider" }
 }

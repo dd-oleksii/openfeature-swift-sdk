@@ -74,59 +74,21 @@ extension OpenFeatureClient {
         defaultValue: T,
         options: FlagEvaluationOptions?
     ) -> FlagEvaluationDetails<T> {
-        let openFeatureApiState = openFeatureApi.getState()
-        var details = FlagEvaluationDetails(flagKey: key, value: defaultValue)
-        switch openFeatureApiState.providerStatus {
-        case .fatal:
-            details.errorCode = .providerFatal
-            details.errorMessage =
-                OpenFeatureError
-                .providerFatalError(message: "unknown")
-                .description
-            details.reason = Reason.error.rawValue
-            return details
-        case .notReady:
-            details.errorCode = .providerNotReady
-            details.errorMessage = OpenFeatureError.providerNotReadyError.description
-            details.reason = Reason.error.rawValue
-            return details
-        case .error:
-            details.errorCode = .general
-            details.errorMessage =
-                OpenFeatureError
-                .generalError(message: "unknown")
-                .description
-            details.reason = Reason.error.rawValue
-            return details
-        case .ready, .reconciling, .stale:
-            return evaluateFlagReady(
-                key: key, defaultValue: defaultValue, options: options, openFeatureApiState: openFeatureApiState)
-        }
-    }
-
-    private func evaluateFlagReady<T: AllowedFlagValueType>(
-        key: String,
-        defaultValue: T,
-        options: FlagEvaluationOptions?,
-        openFeatureApiState: OpenFeatureAPI.OpenFeatureState
-    ) -> FlagEvaluationDetails<T> {
-        var details = FlagEvaluationDetails(flagKey: key, value: defaultValue)
+        let state = openFeatureApi.getState()
         let options = options ?? FlagEvaluationOptions(hooks: [], hookHints: [:])
         let hints = options.hookHints
-        let context = openFeatureApiState.evaluationContext
-        let provider = openFeatureApiState.provider ?? NoOpProvider()
+        let context = state.evaluationContext
 
-        // Copy client-level resources under lock (minimize lock duration)
         lock.lock()
         let clientLogger = self.logger
         let clientHooks = self.hooks
         lock.unlock()
 
         // Resolve logger with priority: evaluation options > client > API
-        let resolvedLogger = options.logger ?? clientLogger ?? openFeatureApi.getLogger()
+        let resolvedLogger = options.logger ?? clientLogger ?? state.logger
 
-        // Merge hooks from all sources
-        let mergedHooks = provider.hooks + options.hooks + clientHooks + openFeatureApi.getHooks()
+        let driver = state.driver
+        let mergedHooks = driver.hooks + options.hooks + clientHooks + state.hooks
 
         let hookCtx = HookContext(
             flagKey: key,
@@ -134,19 +96,23 @@ extension OpenFeatureClient {
             defaultValue: defaultValue,
             ctx: context,
             clientMetadata: self.metadata,
-            providerMetadata: provider.metadata)
+            providerMetadata: driver.metadata)
+        var details = FlagEvaluationDetails(flagKey: key, value: defaultValue)
+
         do {
             hookSupport.beforeHooks(flagValueType: T.flagValueType, hookCtx: hookCtx, hooks: mergedHooks, hints: hints)
-            let providerEval = try createProviderEvaluation(
+            let providerEval = try driver.evaluate(
                 key: key,
-                context: context,
                 defaultValue: defaultValue,
-                provider: provider,
+                context: context,
                 logger: resolvedLogger)
             details = FlagEvaluationDetails<T>.from(providerEval: providerEval, flagKey: key)
             try hookSupport.afterHooks(
-                flagValueType: T.flagValueType, hookCtx: hookCtx, details: details, hooks: mergedHooks, hints: hints
-            )
+                flagValueType: T.flagValueType,
+                hookCtx: hookCtx,
+                details: details,
+                hooks: mergedHooks,
+                hints: hints)
         } catch {
             resolvedLogger?.error("Unable to correctly evaluate flag with key \(key) due to exception \(error)")
             if let error = error as? OpenFeatureError {
@@ -162,85 +128,6 @@ extension OpenFeatureClient {
         hookSupport.finallyHooks(
             flagValueType: T.flagValueType, hookCtx: hookCtx, details: details, hooks: mergedHooks, hints: hints)
         return details
-    }
-
-    // swiftlint:disable:next cyclomatic_complexity
-    private func createProviderEvaluation<V: AllowedFlagValueType>(
-        key: String,
-        context: EvaluationContext?,
-        defaultValue: V,
-        provider: FeatureProvider,
-        logger: Logger?
-    ) throws -> ProviderEvaluation<V> {
-        switch V.flagValueType {
-        case .boolean:
-            guard let defaultValue = defaultValue as? Bool else {
-                break
-            }
-
-            if let evaluation = try provider.getBooleanEvaluation(
-                key: key,
-                defaultValue: defaultValue,
-                context: context,
-                logger: logger) as? ProviderEvaluation<V>
-            {
-                return evaluation
-            }
-        case .string:
-            guard let defaultValue = defaultValue as? String else {
-                break
-            }
-
-            if let evaluation = try provider.getStringEvaluation(
-                key: key,
-                defaultValue: defaultValue,
-                context: context,
-                logger: logger) as? ProviderEvaluation<V>
-            {
-                return evaluation
-            }
-        case .integer:
-            guard let defaultValue = defaultValue as? Int64 else {
-                break
-            }
-
-            if let evaluation = try provider.getIntegerEvaluation(
-                key: key,
-                defaultValue: defaultValue,
-                context: context,
-                logger: logger) as? ProviderEvaluation<V>
-            {
-                return evaluation
-            }
-        case .double:
-            guard let defaultValue = defaultValue as? Double else {
-                break
-            }
-
-            if let evaluation = try provider.getDoubleEvaluation(
-                key: key,
-                defaultValue: defaultValue,
-                context: context,
-                logger: logger) as? ProviderEvaluation<V>
-            {
-                return evaluation
-            }
-        case .object:
-            guard let defaultValue = defaultValue as? Value else {
-                break
-            }
-
-            if let evaluation = try provider.getObjectEvaluation(
-                key: key,
-                defaultValue: defaultValue,
-                context: context,
-                logger: logger) as? ProviderEvaluation<V>
-            {
-                return evaluation
-            }
-        }
-
-        throw OpenFeatureError.generalError(message: "Unable to match default value type with flag value type")
     }
 }
 
@@ -264,22 +151,13 @@ extension OpenFeatureClient {
     }
 
     private func reportTrack(key: String, context: (any EvaluationContext)?, details: (any TrackingEventDetails)?) {
-        let openFeatureApiState = openFeatureApi.getState()
-        switch openFeatureApiState.providerStatus {
-        case .ready, .reconciling, .stale:
-            do {
-                let provider = openFeatureApiState.provider ?? NoOpProvider()
-                try provider.track(key: key, context: mergeEvaluationContext(context), details: details)
-            } catch {
-                // Copy client logger under lock, then call API method
-                lock.lock()
-                let clientLogger = self.logger
-                lock.unlock()
-                let resolvedLogger = clientLogger ?? openFeatureApi.getLogger()
-                resolvedLogger?.error("Unable to report track event with key \(key) due to exception \(error)")
-            }
-        default:
-            break
+        let state = openFeatureApi.getState()
+        do {
+            try state.driver.track(key: key, context: mergeEvaluationContext(context), details: details)
+        } catch {
+            let clientLogger = lock.withLock { self.logger }
+            let resolvedLogger = clientLogger ?? state.logger
+            resolvedLogger?.error("Unable to report track event with key \(key) due to exception \(error)")
         }
     }
 }

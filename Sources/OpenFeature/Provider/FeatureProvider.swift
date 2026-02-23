@@ -2,19 +2,23 @@ import Foundation
 import Logging
 
 /// The interface implemented by upstream flag providers to resolve flags for their service.
-public protocol FeatureProvider: EventPublisher {
+public protocol FeatureProvider: EventPublisher, AnyObject {
     var hooks: [any Hook] { get }
     var metadata: ProviderMetadata { get }
 
     /// Called by OpenFeatureAPI whenever the new Provider is registered
     /// This must throw in case of error, using OpenFeature errors whenever possible
     /// It is expected that the implementer is slow (e.g. network), hence the async nature of the protocol
-    func initialize(initialContext: EvaluationContext?) async throws
+    func initialize(initialContext: EvaluationContext?, onDone: @escaping @Sendable (Result<Void, Error>) -> Void)
+
+    func shutdown(onDone: @escaping @Sendable () -> Void)
 
     /// Called by OpenFeatureAPI whenever a new EvaluationContext is set by the application
     /// This must throw in case of error, using OpenFeature errors whenever possible
     /// It is expected that the implementer is slow (e.g. network), hence the async nature of the protocol
-    func onContextSet(oldContext: EvaluationContext?, newContext: EvaluationContext) async throws
+    func onContextSet(
+        oldContext: EvaluationContext?, newContext: EvaluationContext,
+        onDone: @escaping @Sendable (Result<Void, Error>) -> Void)
 
     /// Evaluates a boolean feature flag.
     ///
@@ -122,6 +126,20 @@ public protocol FeatureProvider: EventPublisher {
 }
 
 extension FeatureProvider {
+    public func initialize(initialContext: EvaluationContext?, onDone: @escaping (Result<Void, Error>) -> Void) {
+        onDone(.success(()))
+    }
+
+    public func shutdown(onDone: @escaping () -> Void) {
+        onDone()
+    }
+
+    public func onContextSet(
+        oldContext: EvaluationContext?, newContext: EvaluationContext, onDone: @escaping (Result<Void, Error>) -> Void
+    ) {
+        onDone(.success(()))
+    }
+
     public func track(key: String, context: (any EvaluationContext)?, details: (any TrackingEventDetails)?) throws {
         // Default to no-op
     }

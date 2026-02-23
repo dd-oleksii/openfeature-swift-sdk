@@ -12,15 +12,20 @@ class StaggeredProvider: FeatureProvider {
         self.onContextSetSemaphore = onContextSetSemaphore
     }
 
-    func onContextSet(oldContext: OpenFeature.EvaluationContext?, newContext: OpenFeature.EvaluationContext) {
+    func onContextSet(
+        oldContext: EvaluationContext?, newContext: EvaluationContext,
+        onDone: @escaping @Sendable (Result<Void, Error>) -> Void
+    ) {
         onContextSetSemaphore?.wait()
         activeContext = newContext
+        onDone(.success(()))
     }
 
-    func initialize(initialContext: OpenFeature.EvaluationContext?) {
+    func initialize(initialContext: EvaluationContext?, onDone: @escaping @Sendable (Result<Void, Error>) -> Void) {
         if let initialContext {
             activeContext = initialContext
         }
+        onDone(.success(()))
     }
 
     var hooks: [any OpenFeature.Hook] = []
@@ -67,7 +72,7 @@ class StaggeredProvider: FeatureProvider {
         return ProviderEvaluation(value: .null, flagMetadata: DoSomethingProvider.flagMetadataMap)
     }
 
-    func observe() -> AnyPublisher<ProviderEvent?, Never> {
+    func observe() -> AnyPublisher<ProviderEvent, Never> {
         eventHandler.observe()
     }
 

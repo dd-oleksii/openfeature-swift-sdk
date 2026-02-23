@@ -9,12 +9,17 @@ class AlwaysBrokenProvider: FeatureProvider {
     var throwFatal = false
     private let eventHandler = EventHandler()
 
-    func onContextSet(oldContext: OpenFeature.EvaluationContext?, newContext: OpenFeature.EvaluationContext) {
+    func onContextSet(
+        oldContext: EvaluationContext?, newContext: EvaluationContext,
+        onDone: @escaping @Sendable (Result<Void, Error>) -> Void
+    ) {
         eventHandler.send(.error())
+        onDone(.success(()))
     }
 
-    func initialize(initialContext: OpenFeature.EvaluationContext?) {
+    func initialize(initialContext: EvaluationContext?, onDone: @escaping @Sendable (Result<Void, Error>) -> Void) {
         eventHandler.send(.error())
+        onDone(.success(()))
     }
 
     func getBooleanEvaluation(key: String, defaultValue: Bool, context: EvaluationContext?) throws
@@ -62,7 +67,7 @@ class AlwaysBrokenProvider: FeatureProvider {
         throw OpenFeatureError.flagNotFoundError(key: key)
     }
 
-    func observe() -> AnyPublisher<ProviderEvent?, Never> {
+    func observe() -> AnyPublisher<ProviderEvent, Never> {
         eventHandler.observe()
     }
 }

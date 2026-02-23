@@ -6,12 +6,6 @@ class DoSomethingProvider: FeatureProvider {
     public static let name = "Something"
     private let eventHandler = EventHandler()
 
-    func onContextSet(oldContext: OpenFeature.EvaluationContext?, newContext: OpenFeature.EvaluationContext) {
-    }
-
-    func initialize(initialContext: OpenFeature.EvaluationContext?) {
-    }
-
     var hooks: [any OpenFeature.Hook] = []
     var metadata: OpenFeature.ProviderMetadata = DoMetadata()
 
@@ -56,7 +50,7 @@ class DoSomethingProvider: FeatureProvider {
         return ProviderEvaluation(value: .null, flagMetadata: DoSomethingProvider.flagMetadataMap)
     }
 
-    func observe() -> AnyPublisher<ProviderEvent?, Never> {
+    func observe() -> AnyPublisher<ProviderEvent, Never> {
         eventHandler.observe()
     }
 

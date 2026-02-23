@@ -8,12 +8,15 @@ class ThrowingProvider: FeatureProvider {
     var hooks: [any Hook] = []
     private let eventHandler = EventHandler()
 
-    func onContextSet(oldContext: OpenFeature.EvaluationContext?, newContext: OpenFeature.EvaluationContext) throws {
-        throw OpenFeatureError.providerFatalError(message: "Wrong credentials")
+    func onContextSet(
+        oldContext: EvaluationContext?, newContext: EvaluationContext,
+        onDone: @escaping @Sendable (Result<Void, Error>) -> Void
+    ) {
+        onDone(.failure(OpenFeatureError.providerFatalError(message: "Wrong credentials")))
     }
 
-    func initialize(initialContext: OpenFeature.EvaluationContext?) throws {
-        throw OpenFeatureError.providerFatalError(message: "Wrong credentials")
+    func initialize(initialContext: EvaluationContext?, onDone: @escaping @Sendable (Result<Void, Error>) -> Void) {
+        onDone(.failure(OpenFeatureError.providerFatalError(message: "Wrong credentials")))
     }
 
     func getBooleanEvaluation(key: String, defaultValue: Bool, context: EvaluationContext?) throws
@@ -46,7 +49,7 @@ class ThrowingProvider: FeatureProvider {
         throw OpenFeatureError.flagNotFoundError(key: key)
     }
 
-    func observe() -> AnyPublisher<ProviderEvent?, Never> {
+    func observe() -> AnyPublisher<ProviderEvent, Never> {
         eventHandler.observe()
     }
 }
