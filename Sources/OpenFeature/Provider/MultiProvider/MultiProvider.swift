@@ -27,25 +27,38 @@ public class MultiProvider: FeatureProvider {
         metadata = MultiProviderMetadata(providers: providers)
     }
 
-    public func initialize(initialContext: EvaluationContext?) async throws {
-        try await withThrowingTaskGroup(of: Void.self) { group in
-            for provider in providers {
-                group.addTask {
-                    try await provider.initialize(initialContext: initialContext)
-                }
-            }
-            try await group.waitForAll()
+    public func initialize(initialContext: EvaluationContext?) -> Future<Void, Never> {
+        return Future { promise in
+            dispatchAll(
+                providers: self.providers,
+                each: { provider, callback in
+                    var cancellable: AnyCancellable?
+                    cancellable = provider.initialize(initialContext: initialContext).sink { _ in
+                        withExtendedLifetime(cancellable) {}
+                        callback()
+                    }
+                },
+                onDone: { promise(.success(())) }
+            )
         }
     }
 
-    public func onContextSet(oldContext: EvaluationContext?, newContext: EvaluationContext) async throws {
-        try await withThrowingTaskGroup(of: Void.self) { group in
-            for provider in providers {
-                group.addTask {
-                    try await provider.onContextSet(oldContext: oldContext, newContext: newContext)
-                }
-            }
-            try await group.waitForAll()
+    public func onContextSet(
+        oldContext: EvaluationContext?,
+        newContext: EvaluationContext
+    ) -> Future<Void, Never> {
+        return Future { promise in
+            dispatchAll(
+                providers: self.providers,
+                each: { provider, callback in
+                    var cancellable: AnyCancellable?
+                    cancellable = provider.onContextSet(oldContext: oldContext, newContext: newContext).sink { _ in
+                        withExtendedLifetime(cancellable) {}
+                        callback()
+                    }
+                },
+                onDone: { promise(.success(())) }
+            )
         }
     }
 
@@ -162,7 +175,7 @@ public class MultiProvider: FeatureProvider {
         }
     }
 
-    public func observe() -> AnyPublisher<ProviderEvent?, Never> {
+    public func observe() -> AnyPublisher<ProviderEvent, Never> {
         return Publishers.MergeMany(providers.map { $0.observe() }).eraseToAnyPublisher()
     }
 
@@ -177,5 +190,24 @@ public class MultiProvider: FeatureProvider {
                 }
                 .joined(separator: ", ")
         }
+    }
+}
+
+/// Runs `body(provider, callback)` for each provider; when all callbacks have been invoked,
+/// invokes `onDone`.
+private func dispatchAll(
+    providers: [FeatureProvider],
+    each body: (FeatureProvider, @escaping @Sendable () -> Void) -> Void,
+    onDone: @escaping @Sendable () -> Void
+) {
+    let group = DispatchGroup()
+    for provider in providers {
+        group.enter()
+        body(provider) {
+            group.leave()
+        }
+    }
+    group.notify(queue: .global()) {
+        onDone()
     }
 }

@@ -330,8 +330,19 @@ class LoggerCapturingProvider: FeatureProvider {
     var capturedLogger: Logger?
     private let eventHandler = EventHandler()
 
-    func initialize(initialContext: EvaluationContext?) async throws {}
-    func onContextSet(oldContext: EvaluationContext?, newContext: EvaluationContext) async throws {}
+    func initialize(initialContext: EvaluationContext?) -> Future<Void, Never> {
+        Future { promise in
+            self.eventHandler.send(.ready())
+            promise(.success(()))
+        }
+    }
+
+    func onContextSet(
+        oldContext: EvaluationContext?,
+        newContext: EvaluationContext
+    ) -> Future<Void, Never> {
+        Future { $0(.success(())) }
+    }
 
     func getBooleanEvaluation(key: String, defaultValue: Bool, context: EvaluationContext?) throws
         -> ProviderEvaluation<Bool>
@@ -389,6 +400,6 @@ class LoggerCapturingProvider: FeatureProvider {
         return try getObjectEvaluation(key: key, defaultValue: defaultValue, context: context)
     }
 
-    func observe() -> AnyPublisher<ProviderEvent?, Never> { eventHandler.observe() }
+    func observe() -> AnyPublisher<ProviderEvent, Never> { eventHandler.observe() }
     struct TestMetadata: ProviderMetadata { var name: String? = "LoggerCapturingProvider" }
 }

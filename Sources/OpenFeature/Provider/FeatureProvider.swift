@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import Logging
 
@@ -5,16 +6,18 @@ import Logging
 public protocol FeatureProvider: EventPublisher {
     var hooks: [any Hook] { get }
     var metadata: ProviderMetadata { get }
+    var status: ProviderStatus { get }
 
-    /// Called by OpenFeatureAPI whenever the new Provider is registered
-    /// This must throw in case of error, using OpenFeature errors whenever possible
-    /// It is expected that the implementer is slow (e.g. network), hence the async nature of the protocol
-    func initialize(initialContext: EvaluationContext?) async throws
+    /// Called by OpenFeatureAPI whenever the new Provider is registered.
+    /// Providers report errors/status via event emission (e.g. `.ready`, `.error`).
+    func initialize(initialContext: EvaluationContext?) -> Future<Void, Never>
 
-    /// Called by OpenFeatureAPI whenever a new EvaluationContext is set by the application
-    /// This must throw in case of error, using OpenFeature errors whenever possible
-    /// It is expected that the implementer is slow (e.g. network), hence the async nature of the protocol
-    func onContextSet(oldContext: EvaluationContext?, newContext: EvaluationContext) async throws
+    /// Called by OpenFeatureAPI whenever a new EvaluationContext is set by the application.
+    /// Providers report errors/status via event emission (e.g. `.contextChanged`, `.error`).
+    func onContextSet(
+        oldContext: EvaluationContext?,
+        newContext: EvaluationContext,
+    ) -> Future<Void, Never>
 
     /// Evaluates a boolean feature flag.
     ///
@@ -122,6 +125,15 @@ public protocol FeatureProvider: EventPublisher {
 }
 
 extension FeatureProvider {
+    // Default implementations for lifecycle methods
+    public var status: ProviderStatus {
+        .ready
+    }
+
+    public func observe() -> AnyPublisher<ProviderEvent, Never> {
+        Empty().eraseToAnyPublisher()
+    }
+
     public func track(key: String, context: (any EvaluationContext)?, details: (any TrackingEventDetails)?) throws {
         // Default to no-op
     }

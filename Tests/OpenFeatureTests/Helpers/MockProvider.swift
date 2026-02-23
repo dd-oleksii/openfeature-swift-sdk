@@ -18,7 +18,7 @@ class MockProvider: FeatureProvider {
     private let _getIntegerEvaluation: (String, Int64, EvaluationContext?) throws -> ProviderEvaluation<Int64>
     private let _getDoubleEvaluation: (String, Double, EvaluationContext?) throws -> ProviderEvaluation<Double>
     private let _getObjectEvaluation: (String, Value, EvaluationContext?) throws -> ProviderEvaluation<Value>
-    private let _observe: () -> AnyPublisher<ProviderEvent?, Never>
+    private let _observe: () -> AnyPublisher<ProviderEvent, Never>
     private let _track: (String, EvaluationContext?, TrackingEventDetails?) throws -> Void
 
     /// Initialize the provider with a set of callbacks that will be called when the provider is initialized,
@@ -60,7 +60,7 @@ class MockProvider: FeatureProvider {
         ) throws -> ProviderEvaluation<Value> = { _, fallback, _ in
             return ProviderEvaluation(value: fallback, flagMetadata: [:])
         },
-        observe: @escaping () -> AnyPublisher<ProviderEvent?, Never> = { Just(nil).eraseToAnyPublisher() },
+        observe: @escaping () -> AnyPublisher<ProviderEvent, Never> = { Empty().eraseToAnyPublisher() },
         track: @escaping (
             String,
             EvaluationContext?,
@@ -78,12 +78,25 @@ class MockProvider: FeatureProvider {
         self._track = track
     }
 
-    func onContextSet(oldContext: EvaluationContext?, newContext: EvaluationContext) async throws {
-        try await _onContextSet(oldContext, newContext)
+    func onContextSet(
+        oldContext: EvaluationContext?,
+        newContext: EvaluationContext
+    ) -> Future<Void, Never> {
+        return Future { promise in
+            Task {
+                try? await self._onContextSet(oldContext, newContext)
+                promise(.success(()))
+            }
+        }
     }
 
-    func initialize(initialContext: EvaluationContext?) async throws {
-        try await _initialize(initialContext)
+    func initialize(initialContext: EvaluationContext?) -> Future<Void, Never> {
+        return Future { promise in
+            Task {
+                try? await self._initialize(initialContext)
+                promise(.success(()))
+            }
+        }
     }
 
     func getBooleanEvaluation(key: String, defaultValue: Bool, context: EvaluationContext?) throws
@@ -116,7 +129,7 @@ class MockProvider: FeatureProvider {
         try _getObjectEvaluation(key, defaultValue, context)
     }
 
-    func observe() -> AnyPublisher<ProviderEvent?, Never> {
+    func observe() -> AnyPublisher<ProviderEvent, Never> {
         _observe()
     }
 

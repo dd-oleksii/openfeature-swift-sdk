@@ -4,16 +4,30 @@ import OpenFeature
 
 class DoSomethingProvider: FeatureProvider {
     public static let name = "Something"
-    private let eventHandler = EventHandler()
-
-    func onContextSet(oldContext: OpenFeature.EvaluationContext?, newContext: OpenFeature.EvaluationContext) {
-    }
-
-    func initialize(initialContext: OpenFeature.EvaluationContext?) {
-    }
 
     var hooks: [any OpenFeature.Hook] = []
     var metadata: OpenFeature.ProviderMetadata = DoMetadata()
+    private let eventHandler = EventHandler()
+
+    func initialize(initialContext: EvaluationContext?) -> Future<Void, Never> {
+        return Future { promise in
+            self.eventHandler.send(.ready())
+            promise(.success(()))
+        }
+    }
+
+    func onContextSet(
+        oldContext: EvaluationContext?,
+        newContext: EvaluationContext
+    ) -> Future<Void, Never> {
+        return Future { promise in
+            promise(.success(()))
+        }
+    }
+
+    func observe() -> AnyPublisher<ProviderEvent, Never> {
+        eventHandler.observe()
+    }
 
     func getBooleanEvaluation(key: String, defaultValue: Bool, context: EvaluationContext?) throws
         -> ProviderEvaluation<
@@ -54,10 +68,6 @@ class DoSomethingProvider: FeatureProvider {
         >
     {
         return ProviderEvaluation(value: .null, flagMetadata: DoSomethingProvider.flagMetadataMap)
-    }
-
-    func observe() -> AnyPublisher<ProviderEvent?, Never> {
-        eventHandler.observe()
     }
 
     public struct DoMetadata: ProviderMetadata {
