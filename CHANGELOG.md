@@ -1,5 +1,87 @@
 # Changelog
 
+## [0.6.0](https://github.com/dd-oleksii/openfeature-swift-sdk/compare/v0.5.0...0.6.0) (2026-03-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* add provider event details ([#77](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/77))
+* Add ImmutableContext implementation ([#70](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/70))
+* Spec v0.8 adherence ([#46](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/46))
+* Add support for Flag Metadata ([#43](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/43))
+* Add EventHandler + Combine ([#29](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/29))
+
+### 🐛 Bug Fixes
+
+* **ci:** use dynamic simulator discovery instead of hardcoded device names ([#103](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/103)) ([bbb6487](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/bbb6487ec2def7fc2e3900c4d08442ce29ec65fd))
+* enable CocoaPods publishing by correcting release-please workflow outputs ([#92](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/92)) ([09ca50a](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/09ca50af82b51b433891fc4f25c8fee5fbf31336))
+* Make HookContext properties public ([#45](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/45)) ([003bbb6](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/003bbb66ec493664f5810334f32411014a2195a8))
+* Prevent race condition on updateContext ([#84](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/84)) ([dd23929](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/dd239294e127ebf598f38227e4b9a85447576aff))
+* remove compilation warnings ([#47](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/47)) ([a21214e](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/a21214eb7d6ad7b5942d41097dd776032d635827))
+* setProviderAndWait does not hang on ProviderError ([#35](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/35)) ([5661080](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/566108007c57a250eac69828f6bdc58d4c1e7c1d))
+
+
+### ✨ New Features
+
+* Add ImmutableContext implementation ([#70](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/70)) ([e8690d1](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/e8690d15bcd331d8455970bc5d38ed6057c64db7))
+* Add logging support via swift-log ([#95](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/95)) ([691b086](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/691b086feb78512f25704218c5a267442d72c217))
+* add multiprovider ([#78](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/78)) ([869b90a](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/869b90a7bf0c98368fe5b49f6c852178ba299ad7))
+* Add MultiProvider tracking support ([#111](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/111)) ([9893f5b](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/9893f5bfcc8e2aea03507233fa57bc5ab5990cd1))
+* add provider event details ([#77](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/77)) ([56b477e](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/56b477e69250bc52feab0c9838234843d83b5732))
+* Add ProviderNotReady event ([#36](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/36)) ([389f117](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/389f117ed4c8612d557f5e854606504cc0fdf3c9))
+* Add setProviderAndWait ([#30](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/30)) ([3ce6b8d](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/3ce6b8d7f14150c77b363df0af3ce41c0e80138d))
+* Add support for Flag Metadata ([#43](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/43)) ([7256a3c](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/7256a3cf7fb62e1ab3c2671ca471d8e30f3c522f))
+* add support for provider fatal error ([#44](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/44)) ([09d2871](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/09d28719037b00f8bc48885270c88c93f9342644))
+* add Tracking API ([#81](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/81)) ([c14b0cd](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/c14b0cd6624c04801d16a801e4cf3412d522e4bd))
+* Adding Cocoapods support ([#61](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/61)) ([f481a51](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/f481a51bd47a50025d9ba32a124f110eb0c8f0fc))
+* Adds watchOS / tvOS support ([#67](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/67)) ([3a5af18](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/3a5af18e7615e5c5a67690c2d626789bcee1e8a6))
+* Allow FlagEvaluationDetails to be a public API ([#79](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/79)) ([0b07a8f](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/0b07a8ff1e790fe57de4608ff7ae2edaa8fdb48d))
+* Improves EvaluationContext thread safety ([#69](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/69)) ([65cb295](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/65cb2951297f0ca105ffb44af7ca249ee278109b))
+* Spec v0.8 adherence ([#46](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/46)) ([b6457f6](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/b6457f693e45bc620e6443f3b8435d30f091ca9d))
+
+
+### 🧹 Chore
+
+* add version.txt ([ca61bdb](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/ca61bdbeb4f71fc36ef1d8338bb764ad7cae108b))
+* **deps:** update actions/checkout action to v4 ([#18](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/18)) ([eb0cd56](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/eb0cd56d1b7c7bb24faf905e67361738731bbeb4))
+* **deps:** update amannn/action-semantic-pull-request action to v6 ([#75](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/75)) ([33a25a9](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/33a25a90d8d02f319919ad6c1cf1bf7b19245c73))
+* **deps:** update dependency apple/swift-format to v509 ([#21](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/21)) ([5f12304](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/5f12304fde5531b957d999a41a24e2122c0038c2))
+* **deps:** update dependency apple/swift-format to v510 ([#37](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/37)) ([84e6f11](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/84e6f11fe766bc472a9c0a086bb9befb3a4dbec8))
+* initial attempt to setup release please ([#11](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/11)) ([e255ad8](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/e255ad8876c2ad85e21bb1e17653aa59d58c5f10))
+* **main:** release 0.0.2 ([#12](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/12)) ([84db460](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/84db46013c9ac76b6f4151d9cf4eaed062953758))
+* **main:** release 0.0.2 ([#17](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/17)) ([114321e](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/114321e376b3d80e6623c5cbd7e8bcef9c6a86d2))
+* **main:** release 0.1.0 ([#20](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/20)) ([02b033c](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/02b033c954766e86d5706bfc8ee5248244c11e77))
+* **main:** release 0.2.0 ([#41](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/41)) ([907567c](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/907567cf9d43aad4c015a8758a7d53d755e76213))
+* **main:** release 0.2.1 ([#49](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/49)) ([b900743](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/b9007433bcc59a8c787e958f2aaf41bffef3bc31))
+* **main:** release 0.3.0 ([#53](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/53)) ([e2be585](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/e2be5852827d7d6b837b9a4e577bb52bea6322d7))
+* **main:** release 0.3.1 ([#63](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/63)) ([2a7cf8a](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/2a7cf8a106bd5beb6d1508546d2c5ef1b6dab865))
+* **main:** release 0.4.0 ([#71](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/71)) ([8455efe](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/8455efe44541420cfb5ffcf6d95422361e8209a8))
+* **main:** release 0.5.0 ([#73](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/73)) ([d716862](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/d71686219a65ab78f77923ceb0e2ea549e1e50ef))
+* remove podspec update script and adjust release configuration ([#65](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/65)) ([2903008](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/290300835dfe8d123651ea15ab27af6f6de30da4))
+* reset version to 0 ([#13](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/13)) ([e736459](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/e736459bde510d7e6a11857cc0d4c81fd812e2ee))
+* reset version to 0.0.1 ([e8a8374](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/e8a83743847a30927de5262049e458c27d92ba05))
+* Revert "chore: reset version to 0 ([#13](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/13))" ([#15](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/15)) ([c7ff441](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/c7ff4412e6ac14a041c258e62ece8e3e99e5eba3))
+* Smaller cleanup in tests ([#33](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/33)) ([053dabc](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/053dabcc8132ba8c48da0b5b313f13a2e9c21e06))
+* update copyright and gitignore ([#88](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/88)) ([0fc85bd](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/0fc85bd855eecbbcb67e3a0be67601eb6d0b2945))
+* update readme features ([#102](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/102)) ([559b45a](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/559b45a97b2dc7249305423354b66f570935e3fb))
+* Update Release Please config ([#16](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/16)) ([090e7e5](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/090e7e54291a2fb9b2f7c5b72e68c79c2898bff6))
+
+
+### 📚 Documentation
+
+* add sections for logging, named providers, and shutdown ([#31](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/31)) ([dc5876c](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/dc5876cbf7d3f61f1db65572943f817a55fdaab9))
+* Fix Installation documentation ([#27](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/27)) ([5ddf45d](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/5ddf45d367df20209c5f760c9a4330aeef1b2ee5)), closes [#25](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/25)
+* Fix spec version label in README ([#54](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/54)) ([3e1ec5b](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/3e1ec5bffc9d6aef0deb76f343191664d377fd31))
+* refer to tag 0.0.1 in installation instructions ([#7](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/7)) ([4545c99](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/4545c991507a090176315fd79297c18cd2497d5f))
+* Update docs with ImmutableContext ([#72](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/72)) ([28ccd3e](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/28ccd3e0f71c2a015d507b8fba1fb294770ab74e))
+* Update README to latest template ([#28](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/28)) ([dbdd502](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/dbdd5026e82c899f3858e14e1dd1547cd5f3f731))
+* Update README.md ([#19](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/19)) ([ec599ff](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/ec599ff7228019286fdad66f4c38f78caf354025))
+
+
+### 🔄 Refactoring
+
+* Add EventHandler + Combine ([#29](https://github.com/dd-oleksii/openfeature-swift-sdk/issues/29)) ([dd122f7](https://github.com/dd-oleksii/openfeature-swift-sdk/commit/dd122f773ba23a1bc873c18cfbe6bf42f0665b02))
+
 ## [0.5.0](https://github.com/open-feature/swift-sdk/compare/0.4.0...0.5.0) (2025-11-12)
 
 
