@@ -13,6 +13,7 @@ public class MultiProvider: FeatureProvider {
 
     private let providers: [FeatureProvider]
     private let strategy: Strategy
+    private let logger: Logger?
 
     /// Initialize a MultiProvider with a list of providers and a strategy.
     /// - Parameters:
@@ -20,10 +21,12 @@ public class MultiProvider: FeatureProvider {
     ///   - strategy: A strategy to evaluate the providers. Defaults to FirstMatchStrategy.
     public init(
         providers: [FeatureProvider],
-        strategy: Strategy = FirstMatchStrategy()
+        strategy: Strategy = FirstMatchStrategy(),
+        logger: Logger? = nil
     ) {
         self.providers = providers
         self.strategy = strategy
+        self.logger = logger
         metadata = MultiProviderMetadata(providers: providers)
     }
 
@@ -161,6 +164,20 @@ public class MultiProvider: FeatureProvider {
             }
         }
     }
+
+    public func track(key: String, context: (any EvaluationContext)?, details: (any TrackingEventDetails)?) throws {
+        for provider in providers {
+            do {
+                try provider.track(key: key, context: context, details: details)
+            } catch {
+                let providerName = provider.metadata.name ?? "Provider"
+                logger?.error(
+                    "Error tracking event \"\(key)\" with provider \"\(providerName)\": \(error)"
+                )
+            }
+        }
+    }
+
 
     public func observe() -> AnyPublisher<ProviderEvent?, Never> {
         return Publishers.MergeMany(providers.map { $0.observe() }).eraseToAnyPublisher()
