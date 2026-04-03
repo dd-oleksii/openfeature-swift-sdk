@@ -7,6 +7,9 @@ import Logging
 public class OpenFeatureAPI {
     // Sync queue to change state atomically
     private let stateQueue = DispatchQueue(label: "com.openfeature.state.queue")
+    // Serial queue on which provider lifecycle calls (initialize, onContextSet) are executed.
+    // Keeping them off stateQueue prevents long-running provider I/O from blocking state reads.
+    private let providerLifecycleQueue = DispatchQueue(label: "com.openfeature.provider-lifecycle")
     // Queue on which api.observe() subscribers are invoked; avoids deadlock when handlers call back into the API.
     private let eventHandlerQueue = DispatchQueue(label: "com.openfeature.event-handlers")
 
@@ -171,28 +174,52 @@ public class OpenFeatureAPI {
         }
     }
 
-    /// Updates state and invokes the provider's initialize on stateQueue; returns the Future for callers that await.
+    /// Updates state atomically on stateQueue, then runs the provider's `initialize` on
+    /// providerLifecycleQueue.
+    /// Returns a Future that resolves when `initialize` completes.
     private func setProviderInternal(provider: FeatureProvider, initialContext: EvaluationContext? = nil)
         -> Future<Void, Never>
     {
-        return stateQueue.sync { () -> Future<Void, Never> in
+        return stateQueue.sync {
             self.providerSubject.send(provider)
             if let initialContext = initialContext {
                 self.evaluationContext = initialContext
             }
-            return provider.initialize(initialContext: initialContext)
+            return self.runLifecycle {
+                provider.initialize(initialContext: initialContext)
+            }
         }
     }
 
-    /// Updates state and invokes the provider's onContextSet on stateQueue; returns the Future for callers that await.
+    /// Updates state atomically on stateQueue, then runs the provider's `onContextSet` on
+    /// providerLifecycleQueue.
+    /// Returns a Future that resolves when `onContextSet` completes.
     private func updateContext(evaluationContext: EvaluationContext) -> Future<Void, Never> {
-        return stateQueue.sync { () -> Future<Void, Never> in
+        return stateQueue.sync {
             let oldContext = self.evaluationContext
             self.evaluationContext = evaluationContext
             guard let provider = self.providerSubject.value else {
                 return Future { $0(.success(())) }
             }
-            return provider.onContextSet(oldContext: oldContext, newContext: evaluationContext)
+            return self.runLifecycle {
+                provider.onContextSet(oldContext: oldContext, newContext: evaluationContext)
+            }
+        }
+    }
+
+    /// Dispatches `work` to providerLifecycleQueue and returns a Future that resolves when it
+    /// completes. `work` is a closure so that the provider Future is created on the lifecycle
+    /// queue rather than the caller's queue.
+    private func runLifecycle(_ work: @escaping () -> Future<Void, Never>) -> Future<Void, Never> {
+        return Future { resolve in
+            self.providerLifecycleQueue.async {
+                var cancelable: AnyCancellable?
+                cancelable = work()
+                    .sink { _ in
+                        withExtendedLifetime(cancelable) {}
+                        resolve(.success(()))
+                    }
+            }
         }
     }
 
